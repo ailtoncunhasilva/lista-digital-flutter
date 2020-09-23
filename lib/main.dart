@@ -27,7 +27,51 @@ class MyHomePage extends StatefulWidget {
 }
 
 class _MyHomePageState extends State<MyHomePage> {
-  List _toDoList = ['Ailton', 'Danielle'];
+  final _toDoController = TextEditingController();
+
+  List _toDoList = [];
+
+  Map<String, dynamic> _lastRemoved;
+  int _lastRemovedPos;
+
+  @override
+  void initState() {
+    super.initState();
+
+    _readData().then((data) {
+      setState(() {
+        _toDoList = json.decode(data);
+      });
+    });
+  }
+
+  void _addToDo() {
+    setState(() {
+      Map<String, dynamic> newToDo = Map();
+      newToDo['title'] = _toDoController.text;
+      _toDoController.text = '';
+      newToDo['ok'] = false;
+      _toDoList.add(newToDo);
+
+      _saveData();
+    });
+  }
+
+  Future<Null> _refresh() async{
+    await Future.delayed(Duration(seconds: 1));
+
+    setState(() {
+      _toDoList.sort((x, y){
+      if(x['ok'] && !y['ok']) return 1;
+      else if(!x['ok'] && x['ok']) return 1;
+      else return 0;
+    });
+
+    _saveData();
+    });
+
+    return null;
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -43,6 +87,7 @@ class _MyHomePageState extends State<MyHomePage> {
               child: Row(children: <Widget>[
                 Expanded(
                   child: TextField(
+                      controller: _toDoController,
                       decoration: InputDecoration(
                           labelText: 'Novo ítem',
                           labelStyle: TextStyle(color: Colors.blue[900]))),
@@ -51,22 +96,71 @@ class _MyHomePageState extends State<MyHomePage> {
                     color: Colors.blue[900],
                     child: Text('ADICIONAR'),
                     textColor: Colors.white,
-                    onPressed: () {})
+                    onPressed: _addToDo)
               ]),
             ),
             Expanded(
-              child: ListView.builder(
-                padding: EdgeInsets.only(top: 10),
-                itemCount: _toDoList.length,
-                itemBuilder: (context, index){
-                  return ListTile(
-                    title: Text(_toDoList[index]),
-                  );
-                }
-              )
-            )
+              child: RefreshIndicator(
+                onRefresh: _refresh,
+                child: ListView.builder(
+                  padding: EdgeInsets.only(top: 10),
+                  itemCount: _toDoList.length,
+                  itemBuilder: buildItem),
+              ),
+            ),
           ],
         ));
+  }
+
+  Widget buildItem(context, index) {
+    return Dismissible(
+      key: Key(DateTime.now().millisecondsSinceEpoch.toString()),
+      background: Container(
+        color: Colors.red,
+        child: Align(
+            alignment: Alignment(-0.9, 0.0),
+            child: Icon(Icons.delete, color: Colors.white)),
+      ),
+      direction: DismissDirection.startToEnd,
+      child: CheckboxListTile(
+        title: Text(_toDoList[index]['title']),
+        value: _toDoList[index]['ok'],
+        secondary: CircleAvatar(
+            child: Icon(_toDoList[index]['ok'] ? Icons.check : Icons.error)),
+        onChanged: (c) {
+          setState(() {
+            _toDoList[index]['ok'] = c;
+            _saveData();
+          });
+        },
+      ),
+      onDismissed: (direction) {
+        setState(() {
+          _lastRemoved = Map.from(_toDoList[index]);
+          _lastRemovedPos = index;
+          _toDoList.removeAt(index);
+
+          _saveData();
+
+          final snack = SnackBar(
+            content: Text('Item \(${_lastRemoved['title']}\) removida'),
+            action: SnackBarAction(
+                label: 'Desfazer',
+                onPressed: () {
+                  setState(() {
+                    _toDoList.insert(_lastRemovedPos, _lastRemoved);
+                    _saveData();
+                  });
+                }),
+                duration: Duration(seconds: 2),
+          );
+
+          Scaffold.of(context).removeCurrentSnackBar();
+          Scaffold.of(context).showSnackBar(snack);
+
+        });
+      },
+    );
   }
 
   Future<File> _getFile() async {
