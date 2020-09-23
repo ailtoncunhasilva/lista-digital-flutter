@@ -32,8 +32,30 @@ class _MyHomePageState extends State<MyHomePage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text('Lista Digital'), centerTitle: true),
-    );
+        appBar: AppBar(
+            title: Text('Lista Digital'),
+            backgroundColor: Colors.blue[900],
+            centerTitle: true),
+        body: Column(
+          children: <Widget>[
+            Container(
+              padding: EdgeInsets.fromLTRB(8, 1, 1, 8),
+              child: Row(children: <Widget>[
+                Expanded(
+                  child: TextField(
+                      decoration: InputDecoration(
+                          labelText: 'Novo ítem',
+                          labelStyle: TextStyle(color: Colors.blue[900]))),
+                ),
+                RaisedButton(
+                    color: Colors.blue[900],
+                    child: Text('ADICIONAR'),
+                    textColor: Colors.white,
+                    onPressed: () {})
+              ]),
+            )
+          ],
+        ));
   }
 
   Future<File> _getFile() async {
@@ -48,12 +70,12 @@ class _MyHomePageState extends State<MyHomePage> {
     return file.writeAsString(data);
   }
 
-  Future<String> _readData() async{
-    try{
+  Future<String> _readData() async {
+    try {
       final file = await _getFile();
 
       return file.readAsString();
-    }catch(e){
+    } catch (e) {
       return null;
     }
   }
