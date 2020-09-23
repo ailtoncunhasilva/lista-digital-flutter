@@ -27,7 +27,7 @@ class MyHomePage extends StatefulWidget {
 }
 
 class _MyHomePageState extends State<MyHomePage> {
-  List _toDoList = [];
+  List _toDoList = ['Ailton', 'Danielle'];
 
   @override
   Widget build(BuildContext context) {
@@ -53,6 +53,17 @@ class _MyHomePageState extends State<MyHomePage> {
                     textColor: Colors.white,
                     onPressed: () {})
               ]),
+            ),
+            Expanded(
+              child: ListView.builder(
+                padding: EdgeInsets.only(top: 10),
+                itemCount: _toDoList.length,
+                itemBuilder: (context, index){
+                  return ListTile(
+                    title: Text(_toDoList[index]),
+                  );
+                }
+              )
             )
           ],
         ));
